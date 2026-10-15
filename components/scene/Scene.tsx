@@ -22,6 +22,7 @@ import { speedFactor } from "@/lib/turn-machine";
 import type { AbductEffect, AnimationSpeed, PendingTurn, Student } from "@/lib/types";
 import type { SceneTemplate } from "@/templates/types";
 import { WalkerAvatar } from "./Avatar";
+import { GrabbableProps } from "./decor";
 import { Ufo } from "./Ufo";
 
 export interface SceneProgress {
@@ -174,6 +175,7 @@ export function Scene(props: SceneProps) {
   useLayoutEffect(() => {
     engineRef.current?.configure({
       lanes: template.lanes,
+      grabPoints: template.grabPoints,
       fx: template.fx,
       viewport: { vbX, vbW, ppu: Math.max(0.15, ppu) },
       reducedMotion,
@@ -231,6 +233,7 @@ export function Scene(props: SceneProps) {
           <g data-layer="bg">
             <Background idp={bgId} />
           </g>
+          <GrabbableProps points={template.grabPoints} />
           <WalkersLayer
             students={students}
             calledIds={calledIds}

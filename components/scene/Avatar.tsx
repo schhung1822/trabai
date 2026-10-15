@@ -10,7 +10,7 @@ import type { Gender } from "@/lib/types";
 
 const OL = {
   stroke: "#33384d",
-  strokeWidth: 1.5,
+  strokeWidth: 1.65,
   strokeLinejoin: "round" as const,
 };
 
@@ -190,11 +190,15 @@ function Leg({
           {...OL}
         />
         {skirt && <rect x={-4.6} y={19} width={9.2} height={12} rx={3} fill="#fff" {...OL} />}
+        {!skirt && (
+          <path d="M -1.5 3 L -1.5 26" fill="none" stroke="#fff" strokeWidth={1.3} opacity={0.22} />
+        )}
         <path
           d="M -7.5 33 C -7.5 27 7.5 27 8.5 33 C 10.5 38 -8 38 -7.5 33 Z"
           fill={ap.shoe}
           {...OL}
         />
+        <path d="M -6.5 34 Q 0 36 7.5 34" fill="none" stroke="#fff" strokeWidth={1.5} opacity={0.55} />
       </g>
     </g>
   );
@@ -214,6 +218,8 @@ function Arm({
       <g data-role={role}>
         <rect x={-3.8} y={-3} width={7.6} height={26} rx={3.8} fill={ap.skin} {...OL} />
         <rect x={-4.2} y={-3.4} width={8.4} height={13} rx={4} fill={ap.shirt} {...OL} />
+        <path d="M -3.5 8.5 L 3.5 8.5" stroke="#A7B8CA" strokeWidth={1.2} opacity={0.65} />
+        <circle cx={0} cy={22} r={4.2} fill={ap.skin} {...OL} />
       </g>
     </g>
   );
@@ -275,10 +281,14 @@ export function AvatarBody({ ap }: AvatarBodyProps) {
       <Leg role="legL" x={-6.5} ap={ap} />
       <Leg role="legR" x={6.5} ap={ap} />
       {skirt && (
-        <path d="M -16 -45 L 16 -45 L 24 -26 L -24 -26 Z" fill={ap.bottomColor} {...OL} />
+        <g>
+          <path d="M -16 -45 L 16 -45 L 24 -26 L -24 -26 Z" fill={ap.bottomColor} {...OL} />
+          <path d="M -9 -43 L -12 -28 M 0 -43 L 0 -27 M 9 -43 L 12 -28" stroke="#fff" strokeWidth={1.2} opacity={0.24} />
+        </g>
       )}
       {/* thân áo */}
       <rect x={-15.5} y={-75} width={31} height={39} rx={10} fill={ap.shirt} {...OL} />
+      <path d="M 11 -69 Q 15 -54 10 -40" fill="none" stroke="#B9C7D5" strokeWidth={2} opacity={0.35} />
       {!skirt && (
         <rect x={-15.5} y={-43} width={31} height={9} rx={4} fill={ap.bottomColor} {...OL} />
       )}
@@ -289,6 +299,10 @@ export function AvatarBody({ ap }: AvatarBodyProps) {
         </g>
       )}
       <path d="M -6.5 -75 L 0 -66.5 L 6.5 -75 Z" fill="#DCE8F6" {...OL} />
+      <path d="M 0 -66 L 0 -39" stroke="#B7C7D9" strokeWidth={1.2} opacity={0.75} />
+      <circle cx={0} cy={-56} r={1.35} fill="#5B6B7E" />
+      <circle cx={0} cy={-47} r={1.35} fill="#5B6B7E" />
+      <rect x={5.5} y={-58} width={7} height={8} rx={2} fill="none" stroke="#9EB0C3" strokeWidth={1.1} />
       {ap.accessory === "scarf" && (
         <g>
           <path d="M -13 -73.5 L 13 -73.5 L 0 -52 Z" fill="#E53935" {...OL} />
@@ -298,11 +312,15 @@ export function AvatarBody({ ap }: AvatarBodyProps) {
       <Arm role="armL" x={-17.5} ap={ap} />
       <Arm role="armR" x={17.5} ap={ap} />
       {/* đầu */}
+      <rect x={-5} y={-76} width={10} height={8} rx={4} fill={ap.skin} {...OL} />
       <circle cx={-22} cy={-91} r={4.6} fill={ap.skin} {...OL} />
       <circle cx={22} cy={-91} r={4.6} fill={ap.skin} {...OL} />
       <circle cx={0} cy={-92} r={22.5} fill={ap.skin} {...OL} />
+      <path d="M -14 -102 Q -4 -112 8 -109" fill="none" stroke="#fff" strokeWidth={3.2} strokeLinecap="round" opacity={0.2} />
       <HairFront ap={ap} />
-      <g>
+      <path d="M -14 -108 Q -2 -116 12 -110" fill="none" stroke="#fff" strokeWidth={2.4} strokeLinecap="round" opacity={0.12} />
+      <g data-role="faceCalm">
+        <path d="M -12 -98 Q -8 -101 -4 -98 M 4 -98 Q 8 -101 12 -98" fill="none" stroke="#4B3540" strokeWidth={1.4} strokeLinecap="round" />
         <ellipse cx={-8.4} cy={-91} rx={2.7} ry={3.5} fill="#2A2A38" />
         <ellipse cx={8.4} cy={-91} rx={2.7} ry={3.5} fill="#2A2A38" />
         <circle cx={-7.5} cy={-92.4} r={1} fill="#fff" />
@@ -313,6 +331,7 @@ export function AvatarBody({ ap }: AvatarBodyProps) {
             <ellipse cx={14} cy={-84} rx={4} ry={2.4} fill="#FF8FA3" opacity={0.5} />
           </>
         )}
+        <path d="M -1 -88 Q 0 -85.5 2 -87" fill="none" stroke="#B66C62" strokeWidth={1.1} strokeLinecap="round" />
         <path
           d="M -5 -82.5 Q 0 -77.5 5 -82.5"
           fill="none"
@@ -320,6 +339,16 @@ export function AvatarBody({ ap }: AvatarBodyProps) {
           strokeWidth={1.8}
           strokeLinecap="round"
         />
+      </g>
+      <g data-role="facePanic" style={{ display: "none" }}>
+        <path d="M -14 -100 L -4 -97 M 4 -97 L 14 -100" fill="none" stroke="#4B3540" strokeWidth={2} strokeLinecap="round" />
+        <ellipse cx={-8.5} cy={-90.5} rx={5.2} ry={6.4} fill="#fff" stroke="#33384d" strokeWidth={1.25} />
+        <ellipse cx={8.5} cy={-90.5} rx={5.2} ry={6.4} fill="#fff" stroke="#33384d" strokeWidth={1.25} />
+        <circle cx={-7.6} cy={-89} r={2.2} fill="#252536" />
+        <circle cx={9.4} cy={-89} r={2.2} fill="#252536" />
+        <ellipse cx={0} cy={-78.5} rx={5.2} ry={6.5} fill="#8A3B3B" stroke="#5A2D32" strokeWidth={1.2} />
+        <ellipse cx={0} cy={-76} rx={2.8} ry={1.7} fill="#FF9DAF" />
+        <path d="M 20 -96 C 27 -88 24 -82 20 -81 C 15 -83 15 -89 20 -96 Z" fill="#7DD8F7" stroke="#3E8EDE" strokeWidth={1.1} />
       </g>
       <Accessory ap={ap} />
     </g>

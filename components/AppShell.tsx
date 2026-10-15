@@ -1,8 +1,8 @@
 "use client";
 
-import { AlertTriangle, FileSpreadsheet, FlaskConical, Minimize2, Sparkles, UserPlus } from "lucide-react";
+import { AlertTriangle, FileSpreadsheet, FlaskConical, Minimize2, UserPlus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ClassChip, Header, LogoMark } from "@/components/Header";
+import { Header, LogoMark } from "@/components/Header";
 import { ControlBar } from "@/components/ControlBar";
 import { Toasts } from "@/components/Toasts";
 import { Toolbar } from "@/components/Toolbar";
@@ -188,7 +188,7 @@ export function AppShell() {
       <div className="grid min-h-dvh place-items-center p-6">
         <div className="flex flex-col items-center gap-3 text-center">
           <LogoMark size={72} />
-          <p className="font-heading text-2xl font-extrabold">App Trả Bài</p>
+          <p className="font-heading text-2xl font-extrabold">UFO kiểm tra bài cũ</p>
           <p className="font-bold text-ink-soft">Đang tải lớp học…</p>
         </div>
       </div>
@@ -202,12 +202,12 @@ export function AppShell() {
   return (
     <div
       ref={rootRef}
-      className={`flex min-h-dvh flex-col ${presentation ? "bg-[#10263b] p-2 sm:p-3" : ""}`}
+      className="relative flex h-dvh min-h-0 flex-col overflow-hidden bg-[#10263b] p-1.5 sm:p-2.5"
     >
       {state.saveError && !bannerHidden && (
         <div
           role="alert"
-          className="flex items-start gap-2 border-b-2 border-line bg-sun px-4 py-2 text-sm font-bold"
+          className="absolute inset-x-2 top-2 z-40 flex items-start gap-2 rounded-xl border-2 border-line bg-sun px-3 py-2 text-sm font-bold shadow-[0_3px_0_var(--line)]"
         >
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
           <span className="flex-1">
@@ -220,36 +220,7 @@ export function AppShell() {
         </div>
       )}
 
-      {!presentation && (
-        <header className="mx-auto w-full max-w-[1500px] px-3 pt-3 sm:px-5 sm:pt-4">
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-            <Header className="shrink-0" />
-            <ClassChip name={cls.name} count={cls.students.length} />
-          </div>
-          <div className="mt-3">
-            <Toolbar
-              classes={state.classes}
-              activeClassId={state.activeClassId}
-              templateName={template.name}
-              soundOn={settings.soundOn}
-              locked={running}
-              onSelectClass={(id) => appStore.setActiveClass(id)}
-              onManageClasses={() => openDialog("classes")}
-              onTemplates={() => openDialog("templates")}
-              onStudents={() => openDialog("students")}
-              onSettings={() => openDialog("settings")}
-              onToggleSound={toggleSound}
-              onFullscreen={() => void enter()}
-            />
-          </div>
-        </header>
-      )}
-
-      <main
-        className={`mx-auto flex w-full flex-1 flex-col gap-3 ${
-          presentation ? "max-w-none justify-center" : "max-w-[1500px] px-3 pb-5 pt-3 sm:px-5 sm:pt-4"
-        }`}
-      >
+      <main className="flex min-h-0 w-full flex-1 items-center justify-center">
         <Scene
           template={template}
           students={present}
@@ -260,24 +231,36 @@ export function AppShell() {
           effect={settings.effect}
           bubbles={settings.speechBubbles}
           reducedMotion={reduced}
-          chromePx={presentation ? 118 : shortViewport ? 190 : 290}
+          chromePx={shortViewport ? 12 : 20}
           onPhaseDone={(p) => appStore.advance(p)}
           onSfx={onSfx}
           overlay={
             <>
-              <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-center p-3 sm:p-4">
-                {phase === "idle" && hasStudents && (
-                  <p className="rounded-full border-2 border-line bg-white/90 px-4 py-2 text-center text-sm font-extrabold shadow-[0_3px_0_var(--line)] sm:text-base">
-                    <Sparkles className="mr-1.5 inline size-4 text-orange" aria-hidden />
-                    Bấm <b>Khởi động UFO</b>
-                    <span className="hidden sm:inline"> để gọi bạn lên trả bài</span>
-                    <span className="sm:hidden"> để gọi bài</span>
-                  </p>
-                )}
-              </div>
+              {!presentation && (
+                <header className="absolute inset-x-0 top-0 z-20 p-2 sm:p-3">
+                  <div className="mx-auto flex w-full max-w-[1480px] items-center justify-between gap-2 rounded-2xl border-2 border-line bg-white/88 px-2 py-1.5 shadow-[0_3px_0_rgba(51,56,77,.3)] backdrop-blur-md sm:px-3">
+                    <Header className="shrink-0" />
+                    <Toolbar
+                      classes={state.classes}
+                      activeClassId={state.activeClassId}
+                      templateName={template.name}
+                      soundOn={settings.soundOn}
+                      locked={running}
+                      onSelectClass={(id) => appStore.setActiveClass(id)}
+                      onManageClasses={() => openDialog("classes")}
+                      onTemplates={() => openDialog("templates")}
+                      onStudents={() => openDialog("students")}
+                      onSettings={() => openDialog("settings")}
+                      onToggleSound={toggleSound}
+                      onFullscreen={() => void enter()}
+                    />
+                  </div>
+                </header>
+              )}
+
               {running && (
                 <p
-                  className="pointer-events-none absolute bottom-3 left-3 rounded-full border-2 border-line bg-[#14304A] px-3.5 py-1.5 text-xs font-extrabold text-[#7CF5CF] shadow-[0_3px_0_var(--line)] sm:bottom-4 sm:left-4 sm:text-sm"
+                  className={`pointer-events-none absolute left-3 z-10 rounded-full border-2 border-line bg-[#14304A] px-3 py-1 text-xs font-extrabold text-[#7CF5CF] shadow-[0_2px_0_var(--line)] ${presentation ? "top-3" : "top-[4.75rem] sm:top-[5.25rem]"}`}
                   aria-hidden
                 >
                   {phase === "scanning" && settings.effect === "siege"
@@ -330,35 +313,33 @@ export function AppShell() {
                     icon={<Minimize2 className="size-4" aria-hidden />}
                     title="Thoát toàn màn hình (Esc)"
                   >
-                    Thoát toàn màn hình
+                    <span className="hidden sm:inline">Thoát toàn màn hình</span>
                   </Btn>
                 </div>
               )}
+
+              <div className="absolute inset-x-0 bottom-0 z-20 p-2 sm:p-3">
+                <ControlBar
+                  running={running}
+                  canStart={canStart(phase) && !resultOpen}
+                  pickCount={settings.pickCount}
+                  effect={settings.effect}
+                  maxPick={present.length}
+                  remaining={eligible}
+                  poolSize={present.length}
+                  noRepeat={settings.noRepeat}
+                  cycle={cls.cycle}
+                  last={lastEntry}
+                  compact
+                  onStart={() => start()}
+                  onSkip={() => appStore.skipToCompleted()}
+                  onChangeCount={(n) => appStore.setSettings({ pickCount: n })}
+                  onChangeEffect={(e) => appStore.setSettings({ effect: e })}
+                  onHistory={() => openDialog("history")}
+                />
+              </div>
             </>
           }
-        />
-
-        <p className="hidden text-center text-sm font-bold text-ink-soft portrait:max-sm:block">
-          Mẹo: xoay ngang màn hình để cảnh UFO rộng và rõ hơn.
-        </p>
-
-        <ControlBar
-          running={running}
-          canStart={canStart(phase) && !resultOpen}
-          pickCount={settings.pickCount}
-          effect={settings.effect}
-          maxPick={present.length}
-          remaining={eligible}
-          poolSize={present.length}
-          noRepeat={settings.noRepeat}
-          cycle={cls.cycle}
-          last={lastEntry}
-          compact={presentation}
-          onStart={() => start()}
-          onSkip={() => appStore.skipToCompleted()}
-          onChangeCount={(n) => appStore.setSettings({ pickCount: n })}
-          onChangeEffect={(e) => appStore.setSettings({ effect: e })}
-          onHistory={() => openDialog("history")}
         />
       </main>
 

@@ -34,7 +34,7 @@ export function Toolbar(p: ToolbarProps) {
   const [menu, setMenu] = useState(false);
 
   const classSelect = (suffix: string) => (
-    <div className="flex min-w-0 items-center gap-2">
+    <div className="flex min-w-0 items-center gap-1.5">
       <label htmlFor={`class-select-${suffix}`} className="sr-only">
         Chọn lớp
       </label>
@@ -43,7 +43,7 @@ export function Toolbar(p: ToolbarProps) {
         value={p.activeClassId}
         disabled={p.locked}
         onChange={(e) => p.onSelectClass(e.target.value)}
-        className={`${inputCls} !w-auto min-w-0 max-w-56 border-[2.5px] bg-white font-extrabold shadow-[0_3px_0_var(--line)]`}
+        className={`${inputCls} !min-h-9 !w-auto min-w-0 max-w-44 !rounded-xl !px-2.5 !py-1 text-sm font-extrabold shadow-[0_2px_0_var(--line)] sm:max-w-52`}
       >
         {p.classes.map((c) => (
           <option key={c.id} value={c.id}>
@@ -54,7 +54,7 @@ export function Toolbar(p: ToolbarProps) {
       <Btn
         variant="ghost"
         size="icon"
-        className="!size-11"
+        className="!size-9 !rounded-xl !shadow-[0_2px_0_var(--line)]"
         disabled={p.locked}
         onClick={p.onManageClasses}
         aria-label="Quản lý lớp: tạo, đổi tên, xóa"
@@ -66,47 +66,67 @@ export function Toolbar(p: ToolbarProps) {
   );
 
   const item = (label: string, icon: ReactNode, onClick: () => void, opts?: { disabled?: boolean; pressed?: boolean }) => (
-    <Btn variant="ghost" onClick={onClick} disabled={opts?.disabled} aria-pressed={opts?.pressed} icon={icon}>
-      {label}
+    <Btn
+      variant="ghost"
+      size="icon"
+      className="!size-9 !rounded-xl !shadow-[0_2px_0_var(--line)]"
+      onClick={onClick}
+      disabled={opts?.disabled}
+      aria-label={label}
+      aria-pressed={opts?.pressed}
+      title={label}
+    >
+      {icon}
     </Btn>
   );
 
-  const soundIcon = p.soundOn ? <Volume2 className="size-5" aria-hidden /> : <VolumeX className="size-5" aria-hidden />;
+  const soundIcon = p.soundOn ? <Volume2 className="size-4.5" aria-hidden /> : <VolumeX className="size-4.5" aria-hidden />;
 
   return (
     <>
       {/* Máy tính / tablet ngang */}
-      <nav aria-label="Công cụ" className="hidden flex-wrap items-center gap-2.5 md:flex short:hidden">
+      <nav aria-label="Công cụ" className="hidden items-center gap-1.5 md:flex short:hidden">
         {classSelect("desktop")}
-        {item(`Template: ${p.templateName}`, <Palette className="size-5" aria-hidden />, p.onTemplates, { disabled: p.locked })}
-        {item("Danh sách học sinh", <Users className="size-5" aria-hidden />, p.onStudents, { disabled: p.locked })}
-        {item("Thiết lập", <Settings className="size-5" aria-hidden />, p.onSettings, { disabled: p.locked })}
+        {item(`Template: ${p.templateName}`, <Palette className="size-4.5" aria-hidden />, p.onTemplates, { disabled: p.locked })}
+        {item("Danh sách học sinh", <Users className="size-4.5" aria-hidden />, p.onStudents, { disabled: p.locked })}
+        {item("Thiết lập", <Settings className="size-4.5" aria-hidden />, p.onSettings, { disabled: p.locked })}
         <Btn
           variant={p.soundOn ? "mint" : "ghost"}
+          size="icon"
+          className="!size-9 !rounded-xl !shadow-[0_2px_0_var(--line)]"
           onClick={p.onToggleSound}
           aria-pressed={p.soundOn}
-          icon={soundIcon}
+          aria-label={p.soundOn ? "Tắt âm thanh" : "Bật âm thanh"}
+          title={p.soundOn ? "Âm thanh đang bật" : "Âm thanh đang tắt"}
         >
-          Âm thanh: {p.soundOn ? "Bật" : "Tắt"}
+          {soundIcon}
         </Btn>
-        {item("Toàn màn hình", <Maximize2 className="size-5" aria-hidden />, p.onFullscreen)}
+        {item("Toàn màn hình", <Maximize2 className="size-4.5" aria-hidden />, p.onFullscreen)}
       </nav>
 
       {/* Điện thoại / tablet dọc */}
-      <nav aria-label="Công cụ" className="flex items-center justify-between gap-2 md:hidden short:flex">
+      <nav aria-label="Công cụ" className="flex min-w-0 items-center gap-1.5 md:hidden short:flex">
         {classSelect("mobile")}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Btn
             variant={p.soundOn ? "mint" : "ghost"}
             size="icon"
+            className="!size-9 !rounded-xl !shadow-[0_2px_0_var(--line)]"
             onClick={p.onToggleSound}
             aria-pressed={p.soundOn}
             aria-label={p.soundOn ? "Tắt âm thanh" : "Bật âm thanh"}
           >
             {soundIcon}
           </Btn>
-          <Btn variant="primary" onClick={() => setMenu(true)} icon={<Menu className="size-5" aria-hidden />}>
-            Menu
+          <Btn
+            variant="primary"
+            size="icon"
+            className="!size-9 !rounded-xl !shadow-[0_2px_0_var(--line)]"
+            onClick={() => setMenu(true)}
+            aria-label="Mở menu công cụ"
+            title="Menu công cụ"
+          >
+            <Menu className="size-4.5" aria-hidden />
           </Btn>
         </div>
       </nav>

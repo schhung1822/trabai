@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import type { LaneDef, SceneFxConfig } from "@/lib/scene-constants";
+import type { GrabPoint, LaneDef, SceneFxConfig } from "@/lib/scene-constants";
 
 /** Props chung cho các lớp nền: `idp` là tiền tố id gradient để tránh trùng id khi vẽ thumbnail. */
 export interface LayerProps {
@@ -19,6 +19,8 @@ export interface SceneTemplate {
   palette: { sky: string; ground: string; accent: string };
   /** Các làn đi bộ của nhân vật (xa → gần). */
   lanes: LaneDef[];
+  /** Đạo cụ hiện hữu để học sinh tìm vật gần nhất và bám khi UFO hút. */
+  grabPoints: GrabPoint[];
   /** Hiệu ứng: tối nhẹ, hướng UFO bay, màu chùm sáng. */
   fx: SceneFxConfig;
   /** Lớp nền phía sau nhân vật. */

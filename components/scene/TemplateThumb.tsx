@@ -5,6 +5,7 @@ import { appearanceFor } from "@/lib/avatar";
 import { WORLD_H, WORLD_W } from "@/lib/scene-constants";
 import type { SceneTemplate } from "@/templates/types";
 import { AvatarBody } from "./Avatar";
+import { GrabbableProps } from "./decor";
 import { Ufo } from "./Ufo";
 
 const SAMPLE = ["thumb-a", "thumb-b", "thumb-c", "thumb-d", "thumb-e"];
@@ -28,6 +29,7 @@ export function TemplateThumb({ template }: { template: SceneTemplate }) {
         </linearGradient>
       </defs>
       <Background idp={`${uid}t`} />
+      <GrabbableProps points={template.grabPoints} />
       {SAMPLE.map((id, i) => {
         const lane = lanes[(i * 2 + 1) % lanes.length];
         const x = 220 + i * 290;
@@ -40,7 +42,7 @@ export function TemplateThumb({ template }: { template: SceneTemplate }) {
       })}
       <Foreground idp={`${uid}t`} />
       <polygon points="700,190 900,190 1010,800 590,800" fill={`url(#${uid}b)`} />
-      <g transform="translate(800 150) scale(1.5)">
+      <g transform="translate(800 150) scale(1.7)">
         <Ufo fx={{ ...fx.ufo, beamCore: fx.beam.core }} idp={`${uid}u`} />
       </g>
     </svg>

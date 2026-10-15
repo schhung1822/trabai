@@ -17,13 +17,14 @@ export function LogoMark({ size = 44 }: { size?: number }) {
 
 export function Header({ className }: { className: string }) {
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
-      <LogoMark />
+    <div className={`flex items-center gap-2 ${className}`}>
+      <span className="grid size-9 shrink-0 place-items-center sm:size-10">
+        <LogoMark size={40} />
+      </span>
       <div className="min-w-0">
-        <h1 className="font-heading text-[1.7rem] font-extrabold leading-none tracking-tight sm:text-3xl">
-          App Trả Bài
+        <h1 className="hidden whitespace-nowrap font-heading text-lg font-extrabold leading-none tracking-tight sm:block sm:text-xl">
+          UFO kiểm tra bài cũ
         </h1>
-        <p className="mt-0.5 hidden text-sm font-bold text-ink-soft sm:block short:hidden">UFO gọi bài – vui mà công bằng</p>
       </div>
     </div>
   );

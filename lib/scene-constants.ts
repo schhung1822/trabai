@@ -20,6 +20,30 @@ export interface LaneDef {
   scale: number;
 }
 
+/** Các đạo cụ thẳng đứng mà học sinh có thể chạy tới bám khi UFO chiếu tia. */
+export type GrabPropKind =
+  | "lamp"
+  | "sign"
+  | "tree"
+  | "flag"
+  | "hoop"
+  | "bollard";
+
+export interface GrabPoint {
+  /** Id ổn định trong phạm vi template, dùng để tìm đúng SVG cần rung/lắc. */
+  id: string;
+  kind: GrabPropKind;
+  /** Gốc đạo cụ trong hệ toạ độ 1600 x 900. */
+  x: number;
+  y: number;
+  /** Tỉ lệ đạo cụ theo chiều sâu của scene. */
+  scale: number;
+  /** Màu nhấn tùy chọn để hòa với từng template. */
+  color?: string;
+  /** `false` khi đạo cụ đã được vẽ sẵn trong Background/Foreground của template. */
+  render?: boolean;
+}
+
 export type UfoArrival = "top" | "left" | "right";
 
 export interface SceneFxConfig {

@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import type { GrabPoint } from "@/lib/scene-constants";
 
 /** Nét viền chung để đồng bộ phong cách cartoon với nhân vật. */
 export const OUT = {
@@ -61,6 +62,7 @@ export function RoundTree({
   leaf = "#5CBF6E",
   leafDark = "#47A85C",
   trunk = "#9A6B45",
+  grabId,
 }: {
   x: number;
   y: number;
@@ -68,17 +70,20 @@ export function RoundTree({
   leaf?: string;
   leafDark?: string;
   trunk?: string;
+  grabId?: string;
 }) {
   return (
-    <g transform={`translate(${x} ${y}) scale(${s})`}>
-      <path d="M -9 0 L -6 -90 L 6 -90 L 9 0 Z" fill={trunk} {...OUT} />
-      <path d="M 0 -60 L 24 -96" stroke={trunk} strokeWidth={6} strokeLinecap="round" />
-      <circle cx={-34} cy={-128} r={38} fill={leafDark} {...OUT} />
-      <circle cx={34} cy={-128} r={38} fill={leafDark} {...OUT} />
-      <circle cx={0} cy={-158} r={46} fill={leaf} {...OUT} />
-      <circle cx={-6} cy={-118} r={42} fill={leaf} {...OUT} />
-      <circle cx={-14} cy={-170} r={9} fill="#fff" opacity={0.22} />
-      <circle cx={22} cy={-130} r={7} fill="#fff" opacity={0.18} />
+    <g data-grab-id={grabId} transform={`translate(${x} ${y}) scale(${s})`}>
+      <g data-grab-visual={grabId ? "" : undefined}>
+        <path d="M -9 0 L -6 -90 L 6 -90 L 9 0 Z" fill={trunk} {...OUT} />
+        <path d="M 0 -60 L 24 -96" stroke={trunk} strokeWidth={6} strokeLinecap="round" />
+        <circle cx={-34} cy={-128} r={38} fill={leafDark} {...OUT} />
+        <circle cx={34} cy={-128} r={38} fill={leafDark} {...OUT} />
+        <circle cx={0} cy={-158} r={46} fill={leaf} {...OUT} />
+        <circle cx={-6} cy={-118} r={42} fill={leaf} {...OUT} />
+        <circle cx={-14} cy={-170} r={9} fill="#fff" opacity={0.22} />
+        <circle cx={22} cy={-130} r={7} fill="#fff" opacity={0.18} />
+      </g>
     </g>
   );
 }
@@ -140,20 +145,93 @@ export function Lamp({
   h = 160,
   s = 1,
   color = "#3F4A5E",
+  grabId,
 }: {
   x: number;
   y: number;
   h?: number;
   s?: number;
   color?: string;
+  grabId?: string;
 }) {
   return (
-    <g transform={`translate(${x} ${y}) scale(${s})`}>
-      <rect x={-9} y={-12} width={18} height={12} rx={3} fill={color} {...OUT_THIN} />
-      <rect x={-4} y={-h} width={8} height={h - 8} rx={3} fill={color} {...OUT_THIN} />
-      <path d={`M 0 ${-h} C 0 ${-h - 26} 26 ${-h - 22} 26 ${-h - 12}`} fill="none" stroke={color} strokeWidth={6} strokeLinecap="round" />
-      <path d={`M 14 ${-h - 12} L 38 ${-h - 12} L 33 ${-h - 2} L 19 ${-h - 2} Z`} fill={color} {...OUT_THIN} />
-      <ellipse cx={26} cy={-h} rx={9} ry={5} fill="#FFF3B0" stroke="#33384d" strokeWidth={1.2} />
+    <g data-grab-id={grabId} transform={`translate(${x} ${y}) scale(${s})`}>
+      <g data-grab-visual={grabId ? "" : undefined}>
+        <rect x={-9} y={-12} width={18} height={12} rx={3} fill={color} {...OUT_THIN} />
+        <rect x={-4} y={-h} width={8} height={h - 8} rx={3} fill={color} {...OUT_THIN} />
+        <path d={`M 0 ${-h} C 0 ${-h - 26} 26 ${-h - 22} 26 ${-h - 12}`} fill="none" stroke={color} strokeWidth={6} strokeLinecap="round" />
+        <path d={`M 14 ${-h - 12} L 38 ${-h - 12} L 33 ${-h - 2} L 19 ${-h - 2} Z`} fill={color} {...OUT_THIN} />
+        <ellipse cx={26} cy={-h} rx={9} ry={5} fill="#FFF3B0" stroke="#33384d" strokeWidth={1.2} />
+      </g>
+    </g>
+  );
+}
+
+/**
+ * Đạo cụ thật trong scene mà engine có thể chọn làm điểm bám.
+ * Lớp ngoài giữ nguyên vị trí; chỉ lớp `data-grab-visual` rung khi bị kéo.
+ */
+export function GrabbableProps({ points }: { points: readonly GrabPoint[] }) {
+  return (
+    <g data-layer="grab-props" style={{ pointerEvents: "none" }}>
+      {points.filter((point) => point.render !== false).map((point) => (
+        <g
+          key={point.id}
+          data-grab-id={point.id}
+          transform={`translate(${point.x} ${point.y}) scale(${point.scale})`}
+        >
+          <g data-grab-visual>
+            {point.kind === "lamp" && (
+              <Lamp x={0} y={0} h={178} color={point.color ?? "#46536A"} />
+            )}
+            {point.kind === "tree" && (
+              <RoundTree
+                x={0}
+                y={0}
+                leaf={point.color ?? "#5CBF6E"}
+                leafDark="#3E9655"
+              />
+            )}
+            {point.kind === "sign" && (
+              <g>
+                <ellipse cx={0} cy={2} rx={18} ry={5} fill="rgba(20,30,50,.18)" />
+                <rect x={-10} y={-13} width={20} height={13} rx={4} fill="#68758A" {...OUT_THIN} />
+                <rect x={-4.5} y={-158} width={9} height={148} rx={3} fill="#AAB5C5" {...OUT_THIN} />
+                <rect x={-38} y={-190} width={76} height={48} rx={12} fill={point.color ?? "#E8505B"} {...OUT} />
+                <path d="M -20 -166 L 20 -166" stroke="#fff" strokeWidth={7} strokeLinecap="round" />
+                <circle cx={-23} cy={-181} r={5} fill="#fff" opacity={0.65} />
+              </g>
+            )}
+            {point.kind === "flag" && (
+              <g>
+                <ellipse cx={0} cy={2} rx={20} ry={5} fill="rgba(20,30,50,.18)" />
+                <rect x={-11} y={-12} width={22} height={12} rx={4} fill="#77869A" {...OUT_THIN} />
+                <rect x={-4} y={-214} width={8} height={204} rx={3} fill="#C7D0DB" {...OUT_THIN} />
+                <circle cx={0} cy={-219} r={7} fill="#FFC93C" {...OUT_THIN} />
+                <VietnamFlag x={4} y={-207} w={72} />
+              </g>
+            )}
+            {point.kind === "hoop" && (
+              <g>
+                <ellipse cx={0} cy={2} rx={22} ry={5} fill="rgba(20,30,50,.18)" />
+                <rect x={-12} y={-13} width={24} height={13} rx={4} fill="#5C6578" {...OUT_THIN} />
+                <rect x={-5} y={-178} width={10} height={168} rx={4} fill="#68758A" {...OUT_THIN} />
+                <rect x={-42} y={-218} width={84} height={54} rx={5} fill="#F8FBFF" {...OUT} />
+                <rect x={-18} y={-199} width={36} height={24} fill="none" stroke={point.color ?? "#E8505B"} strokeWidth={3} />
+                <ellipse cx={0} cy={-159} rx={20} ry={6} fill="none" stroke="#FF8A3D" strokeWidth={5} />
+              </g>
+            )}
+            {point.kind === "bollard" && (
+              <g>
+                <ellipse cx={0} cy={2} rx={20} ry={5} fill="rgba(20,30,50,.18)" />
+                <rect x={-15} y={-74} width={30} height={72} rx={10} fill={point.color ?? "#E8505B"} {...OUT} />
+                <rect x={-17} y={-58} width={34} height={10} rx={3} fill="#FFF5D6" {...OUT_THIN} />
+                <ellipse cx={0} cy={-73} rx={15} ry={6} fill="#F3F6FA" {...OUT_THIN} />
+              </g>
+            )}
+          </g>
+        </g>
+      ))}
     </g>
   );
 }

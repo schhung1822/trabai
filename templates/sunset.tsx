@@ -187,8 +187,8 @@ function SunsetBackground({ idp }: LayerProps) {
       </g>
 
       {/* đèn đường */}
-      <Lamp x={330} y={560} h={200} color="#4A3A33" />
-      <Lamp x={1250} y={560} h={200} color="#4A3A33" />
+      <Lamp x={330} y={560} h={200} color="#4A3A33" grabId="sunset-lamp-330" />
+      <Lamp x={1250} y={560} h={200} color="#4A3A33" grabId="sunset-lamp-1250" />
       <Palm x={36} y={604} s={0.95} color="#2E7D4F" />
     </g>
   );
@@ -198,7 +198,7 @@ function SunsetForeground() {
   return (
     <g>
       <Palm x={1520} y={900} s={1.55} color="#276B44" />
-      <Lamp x={52} y={900} h={400} color="#4A3A33" />
+      <Lamp x={52} y={900} h={400} color="#4A3A33" grabId="sunset-lamp-52" />
     </g>
   );
 }
@@ -231,6 +231,17 @@ export const sunsetTemplate: SceneTemplate = {
     { y: 716, scale: 0.84 },
     { y: 796, scale: 0.95 },
     { y: 876, scale: 1.05 },
+  ],
+  grabPoints: [
+    { id: "sunset-lamp-330", kind: "lamp", x: 330, y: 560, scale: 1, render: false },
+    { id: "sunset-lamp-1250", kind: "lamp", x: 1250, y: 560, scale: 1, render: false },
+    { id: "sunset-lamp-52", kind: "lamp", x: 52, y: 900, scale: 1, render: false },
+    { id: "sunset-sign-back", kind: "sign", x: 480, y: 590, scale: 0.6, color: "#B5452F" },
+    { id: "sunset-tree-back", kind: "tree", x: 780, y: 644, scale: 0.6, color: "#3E9C59" },
+    { id: "sunset-bollard-left", kind: "bollard", x: 240, y: 792, scale: 0.9, color: "#C0453A" },
+    { id: "sunset-sign-front", kind: "sign", x: 570, y: 874, scale: 0.94, color: "#2E8B6B" },
+    { id: "sunset-bollard-right", kind: "bollard", x: 1190, y: 796, scale: 0.9, color: "#FF8A3D" },
+    { id: "sunset-tree-front", kind: "tree", x: 1450, y: 876, scale: 0.82, color: "#2E7D4F" },
   ],
   fx: {
     night: { color: "#25103F", opacity: 0.46 },

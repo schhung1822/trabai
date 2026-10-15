@@ -89,10 +89,10 @@ function StreetBackground({ idp }: LayerProps) {
 
       {/* cây hàng sau + đèn */}
       {BACK_TREES.map((x) => (
-        <RoundTree key={x} x={x} y={590} s={0.72} />
+        <RoundTree key={x} x={x} y={590} s={0.72} grabId={`street-tree-${x}`} />
       ))}
       {LAMPS.map((x) => (
-        <Lamp key={x} x={x} y={600} h={118} />
+        <Lamp key={x} x={x} y={600} h={118} grabId={`street-lamp-${x}`} />
       ))}
 
       {/* lòng đường */}
@@ -173,6 +173,17 @@ export const streetTemplate: SceneTemplate = {
     { y: 812, scale: 0.88 },
     { y: 848, scale: 0.97 },
     { y: 886, scale: 1.06 },
+  ],
+  grabPoints: [
+    { id: "street-tree-267", kind: "tree", x: 267, y: 590, scale: 0.72, render: false },
+    { id: "street-lamp-534", kind: "lamp", x: 534, y: 600, scale: 1, render: false },
+    { id: "street-tree-801", kind: "tree", x: 801, y: 590, scale: 0.72, render: false },
+    { id: "street-lamp-1068", kind: "lamp", x: 1068, y: 600, scale: 1, render: false },
+    { id: "street-tree-1335", kind: "tree", x: 1335, y: 590, scale: 0.72, render: false },
+    { id: "street-bollard-left", kind: "bollard", x: 190, y: 838, scale: 0.9, color: "#FF8A3D" },
+    { id: "street-sign-front", kind: "sign", x: 480, y: 882, scale: 0.94, color: "#2EC4A0" },
+    { id: "street-lamp-front", kind: "lamp", x: 820, y: 886, scale: 0.96 },
+    { id: "street-bollard-right", kind: "bollard", x: 1110, y: 844, scale: 0.92, color: "#E8505B" },
   ],
   fx: {
     night: { color: "#0B1D3D", opacity: 0.44 },

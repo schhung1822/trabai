@@ -44,6 +44,7 @@ html {
 }
 
 body {
+  overflow: hidden;
   background:
     radial-gradient(1200px 500px at 10% -10%, #d8f6ec 0%, transparent 60%),
     radial-gradient(900px 500px at 100% 0%, #dff0ff 0%, transparent 55%),

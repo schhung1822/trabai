@@ -130,8 +130,8 @@ export function SettingsDialog({
           />
           <p className="text-sm font-semibold text-ink-soft">
             {settings.effect === "single"
-              ? "Bắt lẻ: UFO quét qua phố rồi bay đến bắt từng bạn được chọn."
-              : "Bao vây: UFO chiếu sáng toàn bộ học sinh, sau đó rọi riêng và hút lần lượt các bạn được chọn."}
+              ? "Bắt lẻ: mỗi lần nhắm khoảng 2 giây, có thể hụt hoặc thành công cho tới khi gọi đủ số bạn."
+              : "Bao vây: cả lớp chạy tìm chỗ bám; mỗi lượt hút kéo dài khoảng 5 giây để tăng hồi hộp."}
           </p>
         </div>
 

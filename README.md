@@ -1,4 +1,4 @@
-# App Trả Bài – UFO gọi bài
+# UFO kiểm tra bài cũ
 
 Ứng dụng web giúp giáo viên **chọn ngẫu nhiên học sinh kiểm tra bài cũ** qua hoạt cảnh UFO vui nhộn: học sinh đi dạo trên phố, UFO bay đến, chiếu chùm sáng và hút từng bạn được chọn lên tàu.
 
@@ -57,9 +57,9 @@ Bạn cũng có thể thêm, sửa, xóa từng học sinh, tìm theo tên (khô
 2. Kết quả được **chốt ngay một lần** lúc bắt đầu (lấy mẫu không hoàn lại Fisher–Yates với `crypto.getRandomValues`, mỗi bạn đủ điều kiện có xác suất như nhau). Hoạt cảnh chỉ biểu diễn kết quả đó.
 3. Chuỗi hoạt cảnh: `idle → arriving → scanning → abducting → revealing → completed` — UFO bay vào, trời tối nhẹ, chùm sáng chiếu xuống, hút lần lượt từng bạn (bộ đếm trên UFO tăng 0/2 → 1/2 → 2/2), rồi bay đi.
    Có hai **hiệu ứng hút** (chọn ngay trên thanh điều khiển hoặc trong Thiết lập, lưu lại cho lần sau):
-   - **Bắt lẻ** (mặc định): UFO quét chùm sáng qua phố, rồi bay đến bắt từng bạn được chọn.
-   - **Bao vây**: UFO đứng giữa trời, chùm sáng mở rộng chiếu cả lớp (mọi bạn hoảng hốt giơ tay), sau đó đèn rọi riêng xuống từng bạn được chọn và hút lần lượt.
-   - Ở cả hai hiệu ứng, bạn bị chọn sẽ **bám víu** vào cột đèn / biển báo / thân cây, vung chân, bay ngang như lá cờ rồi tuột tay mới bị hút lên (có câu thoại vui khi bật bong bóng thoại).
+   - **Bắt lẻ** (mặc định): mỗi lần nhắm kéo dài khoảng 2 giây. UFO có thể nhắm hụt một bạn rồi thử lại; chỉ lượt thành công mới tăng bộ đếm cho tới khi đủ số người đã chốt.
+   - **Bao vây**: UFO đứng giữa trời, chùm sáng mở rộng chiếu cả lớp. Mỗi lượt hút khoảng 5 giây để các bạn hoảng loạn chạy về vật bám trước khi đèn rọi riêng kéo bạn được chọn lên.
+   - Ở cả hai hiệu ứng, học sinh tìm **đạo cụ gần nhất có thể bám** trong template (đèn, biển báo, cây, cột cờ, cột bóng rổ hoặc cọc chắn). Bạn bị chọn sẽ bám chặt, vung chân rồi tuột tay mới bị hút lên; các bạn còn lại cũng đổi nét mặt và chạy tìm chỗ bám khi ở trong tia sáng.
 4. Bảng **“Mời các bạn lên trả bài!”** hiện danh sách đầy đủ (avatar, STT, họ tên) với nút **Gọi lượt tiếp theo** và **Đóng**.
 5. **Bỏ qua hoạt cảnh** nhảy thẳng tới kết quả đã chốt (không chọn lại). Tải lại trang giữa chừng sẽ khôi phục đúng kết quả, không mất hay tạo thêm lượt.
 6. Trong lúc UFO chạy, nút Bắt đầu bị khóa và không thể sửa lớp / danh sách / thiết lập.
@@ -105,6 +105,9 @@ Có 3 template dùng chung danh sách, thuật toán chọn và kết quả:
      description: "Mô tả ngắn cho thẻ chọn template.",
      palette: { sky: "#…", ground: "#…", accent: "#…" },
      lanes: [{ y: 600, scale: 0.7 }, /* … xa → gần */],   // các làn đi bộ của nhân vật
+     grabPoints: [                       // đạo cụ thật để học sinh chạy tới bám
+       { id: "lamp-a", kind: "lamp", x: 300, y: 600, scale: 0.7 },
+     ],
      fx: {                            // cấu hình hiệu ứng
        night: { color: "#0B1D3D", opacity: 0.45 },        // mức "tối nhẹ" khi UFO đến
        arrive: "top", leave: "top", hoverY: 150,          // "top" | "left" | "right"

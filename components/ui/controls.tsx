@@ -163,7 +163,7 @@ export function Stepper({
   disabled?: boolean;
   compact?: boolean;
 }) {
-  const size = compact ? "size-10" : "size-11";
+  const size = compact ? "size-9" : "size-11";
   return (
     <div className="inline-flex items-center gap-2" role="group" aria-label={label}>
       <button
@@ -177,7 +177,7 @@ export function Stepper({
       </button>
       <output
         aria-live="polite"
-        className="min-w-10 text-center font-heading text-3xl font-extrabold tabular-nums"
+        className={`${compact ? "min-w-7 text-2xl" : "min-w-10 text-3xl"} text-center font-heading font-extrabold tabular-nums`}
       >
         {value}
       </output>

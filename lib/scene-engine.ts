@@ -1,5 +1,12 @@
 import { LABEL_BASE_Y } from "@/components/scene/Avatar";
-import { SPEECH_LINES, WORLD_W, type LaneDef, type SceneFxConfig } from "./scene-constants";
+import { buildSingleAttemptPlan, type VisualAttempt } from "./abduction-plan";
+import {
+  SPEECH_LINES,
+  WORLD_W,
+  type GrabPoint,
+  type LaneDef,
+  type SceneFxConfig,
+} from "./scene-constants";
 import type { TurnPhase } from "./turn-machine";
 import { hashString } from "./random";
 import { buildWalkerSpecs, type WalkerSpec } from "./walker-spec";
@@ -52,6 +59,8 @@ interface Walker {
   legR: SVGGElement | null;
   armL: SVGGElement | null;
   armR: SVGGElement | null;
+  faceCalm: SVGGElement | null;
+  facePanic: SVGGElement | null;
   labelWrap: SVGGElement | null;
   lane: LaneDef;
   laneY: number;
@@ -66,6 +75,7 @@ interface Walker {
   mode: "walk" | "react" | "gone";
   up: number;
   inBeam: boolean;
+  panicX: number | null;
   bubbleCd: number;
   appliedDir: number;
 }
@@ -97,44 +107,23 @@ const easeInOutCubic = (t: number) =>
   t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 const f1 = (n: number) => n.toFixed(1);
 
-const BEAM_HALF_TOP = 46;
-const BEAM_HALF_BOTTOM = 175;
+const BEAM_HALF_TOP = 70;
+const BEAM_HALF_BOTTOM = 210;
 const GROUND_Y = 830;
+const UFO_HATCH_Y = 42;
 
 /** Vị trí bàn tay nắm cột (toạ độ nhân vật, hướng nhìn phải) và khoảng cách từ người đến cột. */
 const GRIP_DX = 38.8;
 const GRIP_Y = 83;
-const POLE_DX = 30;
 
 const GRAB_LINES = [
   "Khoan đã, em bám chắc rồi!",
   "Em chưa ôn xong mà!",
-  "Cột ơi, giữ em với!",
+  "Giữ em với!",
   "Ối ối, đừng hút em!",
 ];
 
-const SVG_NS = "http://www.w3.org/2000/svg";
-
-/** Các vật để bám víu (gốc toạ độ ở chân cột, cao ~190). */
-const GRAB_PROPS: Record<string, string> = {
-  lamp: `<rect x="-9" y="-14" width="18" height="14" rx="3" fill="#3F4A5E" stroke="#33384d" stroke-width="2"/>
-    <rect x="-5" y="-190" width="10" height="180" rx="4" fill="#4C5A72" stroke="#33384d" stroke-width="2"/>
-    <path d="M0 -190 C0 -214 28 -210 28 -198" fill="none" stroke="#33384d" stroke-width="7" stroke-linecap="round"/>
-    <path d="M0 -190 C0 -214 28 -210 28 -198" fill="none" stroke="#4C5A72" stroke-width="3.4" stroke-linecap="round"/>
-    <path d="M16 -198 L40 -198 L35 -186 L21 -186 Z" fill="#3F4A5E" stroke="#33384d" stroke-width="2" stroke-linejoin="round"/>
-    <ellipse cx="28" cy="-185" rx="9" ry="5" fill="#FFF3B0" stroke="#33384d" stroke-width="1.6"/>`,
-  sign: `<rect x="-9" y="-12" width="18" height="12" rx="3" fill="#8A93A3" stroke="#33384d" stroke-width="2"/>
-    <rect x="-4.5" y="-176" width="9" height="168" rx="3" fill="#B9C2D0" stroke="#33384d" stroke-width="2"/>
-    <circle cx="0" cy="-196" r="27" fill="#E8505B" stroke="#33384d" stroke-width="2.4"/>
-    <circle cx="0" cy="-196" r="20" fill="none" stroke="#fff" stroke-width="3"/>
-    <rect x="-12" y="-200" width="24" height="8" rx="2" fill="#fff"/>`,
-  tree: `<path d="M-11 0 L-7 -130 L7 -130 L11 0 Z" fill="#9A6B45" stroke="#33384d" stroke-width="2" stroke-linejoin="round"/>
-    <path d="M-3 -40 L-3 -70 M4 -80 L4 -105" stroke="#7A5232" stroke-width="2.4" stroke-linecap="round"/>
-    <circle cx="-30" cy="-158" r="30" fill="#47A85C" stroke="#33384d" stroke-width="2"/>
-    <circle cx="30" cy="-158" r="30" fill="#47A85C" stroke="#33384d" stroke-width="2"/>
-    <circle cx="0" cy="-186" r="36" fill="#5CBF6E" stroke="#33384d" stroke-width="2"/>`,
-};
-const GRAB_KINDS = ["lamp", "sign", "tree"] as const;
+const MISS_LINES = ["Hụt rồi!", "Suýt nữa thì bị bắt!", "Tia hút trượt mất rồi!"];
 
 export class SceneEngine {
   private svg: SVGSVGElement;
@@ -161,6 +150,7 @@ export class SceneEngine {
   private specs = new Map<string, WalkerSpec>();
   private fx!: SceneFxConfig;
   private lanes: LaneDef[] = [];
+  private grabPoints: GrabPoint[] = [];
   private vp: Viewport = { vbX: 0, vbW: WORLD_W, ppu: 0.8 };
   private boost = 1;
   private reduced = false;
@@ -200,6 +190,8 @@ export class SceneEngine {
   private done = 0;
   private clone: SVGGElement | null = null;
   private pole: SVGGElement | null = null;
+  private poleBaseTransform = "";
+  private gripPoint: GrabPoint | null = null;
   private gripCenter: { x: number; y: number; rot: number } | null = null;
   /** Đèn rọi riêng xuống bạn bị chọn (chế độ bao vây). */
   private spotAmt = 0;
@@ -259,11 +251,13 @@ export class SceneEngine {
 
   configure(opts: {
     lanes: LaneDef[];
+    grabPoints: GrabPoint[];
     fx: SceneFxConfig;
     viewport: Viewport;
     reducedMotion: boolean;
   }) {
     this.lanes = opts.lanes;
+    this.grabPoints = opts.grabPoints;
     this.fx = opts.fx;
     this.vp = opts.viewport;
     this.reduced = opts.reducedMotion;
@@ -314,6 +308,8 @@ export class SceneEngine {
           legR: null,
           armL: null,
           armR: null,
+          faceCalm: null,
+          facePanic: null,
           labelWrap: null,
           lane: this.lanes[spec.laneIdx],
           laneY: spec.y,
@@ -328,6 +324,7 @@ export class SceneEngine {
           mode: "walk",
           up: 0,
           inBeam: false,
+          panicX: null,
           bubbleCd: 0,
           appliedDir: 0,
         };
@@ -340,6 +337,8 @@ export class SceneEngine {
       w.legR = el.querySelector('[data-role="legR"]');
       w.armL = el.querySelector('[data-role="armL"]');
       w.armR = el.querySelector('[data-role="armR"]');
+      w.faceCalm = el.querySelector('[data-role="faceCalm"]');
+      w.facePanic = el.querySelector('[data-role="facePanic"]');
       w.labelWrap = el.querySelector('[data-role="labelWrap"]');
       this.layoutWalker(w);
       this.writeWalker(w);
@@ -378,6 +377,7 @@ export class SceneEngine {
   private writeWalker(w: Walker, jump = 0) {
     const sw = Math.sin(w.phase);
     const walking = !this.reduced || w.mode === "react";
+    const panicking = w.mode === "react";
     const legA = walking ? sw * 28 : 0;
     const armA = walking ? -sw * 24 : 0;
     const bobY = walking ? -Math.abs(sw) * 3.2 : 0;
@@ -401,6 +401,8 @@ export class SceneEngine {
     w.armL?.setAttribute("transform", `rotate(${f1(aL)})`);
     w.armR?.setAttribute("transform", `rotate(${f1(aR)})`);
     w.bob?.setAttribute("transform", `translate(0 ${f1(bobY)})`);
+    if (w.faceCalm) w.faceCalm.style.display = panicking ? "none" : "";
+    if (w.facePanic) w.facePanic.style.display = panicking ? "" : "none";
   }
 
   /* ---------------------------------------------------------------- */
@@ -442,10 +444,18 @@ export class SceneEngine {
       if (w.mode === "gone") continue;
       const reacting = w.mode === "react";
       if (!this.reduced) {
-        const mul = reacting ? 0.25 : this.speedMul;
-        w.x += w.dir * w.speed * w.lane.scale * dt * mul;
-        if (w.x > hi) w.x = lo;
-        else if (w.x < lo) w.x = hi;
+        if (reacting && w.panicX !== null) {
+          const dx = w.panicX - w.x;
+          if (Math.abs(dx) > 2) {
+            w.dir = dx > 0 ? 1 : -1;
+            w.x += Math.sign(dx) * Math.min(Math.abs(dx), (125 + w.speed * 0.6) * dt);
+          }
+        } else {
+          const mul = reacting ? 0.25 : this.speedMul;
+          w.x += w.dir * w.speed * w.lane.scale * dt * mul;
+          if (w.x > hi) w.x = lo;
+          else if (w.x < lo) w.x = hi;
+        }
         w.phase += dt * w.stride * (reacting ? 1.5 : this.speedMul > 1.05 ? 1.2 : 1);
       }
       const target = reacting ? 1 : 0;
@@ -497,7 +507,7 @@ export class SceneEngine {
     // chùm sáng
     if (this.beamAmt > 0.01 && showUfo) {
       const us = this.us;
-      const topY = this.uy + 24 * us;
+      const topY = this.uy + UFO_HATCH_Y * us;
       const flicker = this.reduced ? 1 : 0.93 + Math.sin(this.time * 17) * 0.07;
       const a = this.beamAmt;
       const tw = BEAM_HALF_TOP * us;
@@ -552,7 +562,7 @@ export class SceneEngine {
       const k = clamp(14 / (16 * this.vp.ppu), 0.9, 2.6);
       const half = (parseFloat(this.hudBg.getAttribute("width") ?? "200") / 2) * k;
       const x = clamp(this.ux, this.minX + half + 6, this.maxX - half - 6);
-      const y = Math.max(34 * k + 8, this.uy - 66 * us - 20 - 28 * k);
+      const y = Math.max(34 * k + 8, this.uy - 104 * us - 20 - 28 * k);
       const pop = 1 + Math.sin(this.hudPop * Math.PI) * 0.12;
       this.hud.setAttribute(
         "transform",
@@ -772,13 +782,100 @@ export class SceneEngine {
         for (const w of this.walkers.values()) {
           if (w.mode === "react") w.mode = "walk";
           w.inBeam = false;
+          w.panicX = null;
         }
       },
     });
 
-    /* --- abducting: mỗi học sinh gồm (tiếp cận/chọn) + bám víu + bị hút --- */
-    opts.targets.forEach((t, i) => {
-      const last = i === total - 1;
+    const attempts: VisualAttempt[] = siege
+      ? opts.targets.map((student) => ({ student, outcome: "success" }))
+      : buildSingleAttemptPlan(
+          Array.from(this.walkers.values(), ({ id, name }) => ({ id, name })),
+          opts.targets,
+        );
+    let successIndex = 0;
+
+    /* Bắt lẻ có thể nhắm hụt; chỉ lượt thành công mới tăng bộ đếm kết quả. */
+    attempts.forEach((attempt) => {
+      if (attempt.outcome === "miss") {
+        const t = attempt.student;
+        let w: Walker | undefined;
+        let startUx = 0;
+        let startFx = 0;
+        let startWx = 0;
+        let targetX = 0;
+        let escapeX = 0;
+        let announced = false;
+        segs.push({
+          phase: "abducting",
+          dur: (red ? 0.45 : 2) * (red ? 1 : f),
+          lastOfPhase: false,
+          enter: () => {
+            w = this.walkers.get(t.id);
+            startUx = this.ux;
+            startFx = this.footX;
+            startWx = w?.x ?? this.cx;
+            const point = w ? this.nearestGrabPoint(w) : null;
+            const dir: 1 | -1 = point && point.x < startWx ? -1 : 1;
+            targetX = point
+              ? clamp(point.x - dir * GRIP_DX * (w?.s ?? 1), this.minX + 70, this.maxX - 70)
+              : startWx;
+            escapeX = clamp(targetX - dir * 110, this.minX + 50, this.maxX - 50);
+            if (w) {
+              w.mode = "react";
+              w.panicX = null;
+              w.dir = dir;
+            }
+            this.setHud(t.name, this.done, total);
+            this.hudName.textContent = `Đang khóa mục tiêu: ${t.name}`;
+            this.cb.onProgress({ done: this.done, total, current: t.name });
+          },
+          update: (p) => {
+            this.nightAmt = 1;
+            this.ufoAlpha = 1;
+            this.beamAmt = p > 0.72 && !red ? 0.65 + Math.sin(this.time * 35) * 0.25 : 1;
+            const lock = easeInOutCubic(clamp(p / 0.5, 0, 1));
+            const flee = easeOutCubic(clamp((p - 0.58) / 0.42, 0, 1));
+            const x = lerp(lerp(startWx, targetX, lock), escapeX, flee);
+            if (w && !red) {
+              w.x = x;
+              if (flee > 0.05) w.dir = escapeX > targetX ? 1 : -1;
+            }
+            this.botW = lerp(BEAM_HALF_BOTTOM, 112, lock);
+            this.footX = lerp(startFx, x, lock);
+            this.footY = w?.y ?? GROUND_Y;
+            if (!red) {
+              this.ux = lerp(startUx, x, lock);
+              this.uy = hy + Math.sin(p * Math.PI * 4) * 5;
+              this.tilt = p > 0.6 ? Math.sin(this.time * 18) * 7 : (x - this.ux) * 0.03;
+            }
+            if (p > 0.58) {
+              this.hudName.textContent = "Trượt mất rồi!";
+              if (!announced && w) {
+                announced = true;
+                this.spawnBubble(w, MISS_LINES[Math.floor(Math.random() * MISS_LINES.length)], true);
+              }
+            }
+            this.reactInBeam(w);
+          },
+          exit: () => {
+            if (w) {
+              w.mode = "walk";
+              w.inBeam = false;
+              w.panicX = null;
+            }
+            this.tilt = 0;
+            this.setHud(null, this.done, total);
+            this.cb.onProgress({ done: this.done, total, current: null });
+          },
+        });
+        return;
+      }
+
+      /* --- lượt thành công: tiếp cận + bám vật gần nhất + bị hút --- */
+      const t = attempt.student;
+      const i = successIndex++;
+      const last = successIndex === total;
       let startUx = 0;
       let startFx = 0;
       let startWx = 0;
@@ -787,15 +884,23 @@ export class SceneEngine {
 
       segs.push({
         phase: "abducting",
-        dur: (red ? 0.35 : siege ? 0.85 : 0.95) * (red ? 1 : f),
+        dur: (red ? 0.3 : siege ? 1.1 : 0.42) * (red ? 1 : f),
         lastOfPhase: false,
         enter: () => {
           w = this.walkers.get(t.id);
           startUx = this.ux;
           startFx = this.footX;
           startWx = w?.x ?? this.cx;
-          tx = clamp(startWx, this.minX + 170, this.maxX - 170);
-          if (w) w.mode = "react";
+          this.gripPoint = w ? this.nearestGrabPoint(w) : null;
+          const dir: 1 | -1 = this.gripPoint && this.gripPoint.x < startWx ? -1 : 1;
+          tx = this.gripPoint
+            ? clamp(this.gripPoint.x - dir * GRIP_DX * (w?.s ?? 1), this.minX + 70, this.maxX - 70)
+            : clamp(startWx, this.minX + 170, this.maxX - 170);
+          if (w) {
+            w.mode = "react";
+            w.panicX = null;
+            w.dir = dir;
+          }
           this.setHud(t.name, this.done, total);
           this.hudShow = 1;
           this.cb.onProgress({ done: this.done, total, current: t.name });
@@ -838,12 +943,12 @@ export class SceneEngine {
       if (!red) {
         segs.push({
           phase: "abducting",
-          dur: (total > 4 ? 1.1 : 1.6) * f,
+          dur: (siege ? 2.25 : 0.68) * f,
           lastOfPhase: false,
           enter: () => {
             if (!w) return;
             w.el.style.display = "none";
-            this.makeGrabProp(w, i);
+            this.bindGrabProp(this.gripPoint);
             this.makeClone(w);
             this.cb.sfx("grab");
             this.spawnBubble(w, GRAB_LINES[i % GRAB_LINES.length], true);
@@ -880,10 +985,7 @@ export class SceneEngine {
             this.setCloneLimbs(150 + Math.sin(this.time * 18) * 16, -125, kick, -kick);
             if (this.pole) {
               const wob = Math.sin(this.time * 22) * 1.8 * pull * dir;
-              this.pole.setAttribute(
-                "transform",
-                `translate(${f1(w.x + dir * POLE_DX * s)} ${f1(w.y)}) scale(${s.toFixed(3)}) rotate(${f1(wob)})`,
-              );
+              this.pole.setAttribute("transform", `${this.poleBaseTransform} rotate(${f1(wob)})`.trim());
             }
           },
         });
@@ -893,7 +995,7 @@ export class SceneEngine {
       let side = 1;
       segs.push({
         phase: "abducting",
-        dur: (red ? 0.6 : total > 4 ? 1.3 : 1.7) * (red ? 1 : f),
+        dur: (red ? 0.55 : siege ? 1.65 : 0.9) * (red ? 1 : f),
         lastOfPhase: last,
         enter: () => {
           side = w?.dir ?? 1;
@@ -921,7 +1023,7 @@ export class SceneEngine {
           if (!this.clone || !w) return;
           const us = this.us;
           const hatchX = this.ux;
-          const hatchY = this.uy + 30 * us;
+          const hatchY = this.uy + UFO_HATCH_Y * us;
           const g = this.gripCenter;
           const p0x = g?.x ?? cloneStart.x;
           const p0y = g?.y ?? cloneStart.y - 55 * cloneStart.s;
@@ -945,10 +1047,7 @@ export class SceneEngine {
           if (this.pole) {
             // Cột lắc mạnh rồi mờ dần sau khi bạn tuột tay.
             const wob = Math.sin(this.time * 22) * 1.8 * (1 - p) * side;
-            this.pole.setAttribute(
-              "transform",
-              `translate(${f1(w.x + side * POLE_DX * w.s)} ${f1(w.y)}) scale(${w.s.toFixed(3)}) rotate(${f1(wob)})`,
-            );
+            this.pole.setAttribute("transform", `${this.poleBaseTransform} rotate(${f1(wob)})`.trim());
             this.pole.setAttribute("opacity", (1 - clamp((p - 0.4) / 0.5, 0, 1)).toFixed(2));
           }
         },
@@ -957,14 +1056,13 @@ export class SceneEngine {
             this.clone.remove();
             this.clone = null;
           }
-          if (this.pole) {
-            this.pole.remove();
-            this.pole = null;
-          }
+          this.releaseGrabProp();
           this.gripCenter = null;
+          this.gripPoint = null;
           this.spotAmt = 0;
           if (w) {
             w.mode = "gone";
+            w.panicX = null;
             w.el.style.display = "none";
             w.el.style.opacity = "";
             w.inBeam = false;
@@ -1027,7 +1125,7 @@ export class SceneEngine {
    * `exclude` là học sinh đang được hút (do đoạn hoạt cảnh riêng điều khiển).
    */
   private reactInBeam(exclude?: Walker) {
-    const topY = this.uy + 24 * this.us;
+    const topY = this.uy + UFO_HATCH_Y * this.us;
     const botY = this.footY;
     let activeBubbles = this.bubbles.filter((b) => b.walker).length;
     for (const w of this.walkers.values()) {
@@ -1037,6 +1135,16 @@ export class SceneEngine {
       const half = lerp(BEAM_HALF_TOP * this.us, this.botW * this.beamAmt, t) * 0.95;
       const inside = Math.abs(w.x - center) < half && this.beamAmt > 0.5;
       if (inside && !w.inBeam) {
+        const point = this.nearestGrabPoint(w);
+        if (point) {
+          const side = point.x < w.x ? -1 : 1;
+          const personalOffset = ((hashString(w.id) % 3) - 1) * 8;
+          w.panicX = clamp(
+            point.x - side * (GRIP_DX + personalOffset) * w.s,
+            this.minX + 40,
+            this.maxX - 40,
+          );
+        }
         if (activeBubbles < 4 && Math.random() < 0.6) {
           this.spawnBubble(w);
           activeBubbles++;
@@ -1044,6 +1152,7 @@ export class SceneEngine {
       }
       w.inBeam = inside;
       w.mode = inside ? "react" : "walk";
+      if (!inside) w.panicX = null;
     }
   }
 
@@ -1073,17 +1182,41 @@ export class SceneEngine {
     set("legR", legR);
   }
 
-  /** Vẽ vật để bám (cột đèn / biển báo / thân cây) ngay cạnh bạn bị chọn. */
-  private makeGrabProp(w: Walker, index: number) {
-    const kind = GRAB_KINDS[(index + (hashString(w.id) & 1)) % GRAB_KINDS.length];
-    const g = document.createElementNS(SVG_NS, "g");
-    g.innerHTML = GRAB_PROPS[kind];
-    g.setAttribute(
-      "transform",
-      `translate(${f1(w.x + w.dir * POLE_DX * w.s)} ${f1(w.y)}) scale(${w.s.toFixed(3)})`,
-    );
-    this.abductLayer.appendChild(g);
-    this.pole = g;
+  /** Chọn đạo cụ gần học sinh nhất, ưu tiên cùng lớp chiều sâu (trục y). */
+  private nearestGrabPoint(w: Walker): GrabPoint | null {
+    let nearest: GrabPoint | null = null;
+    let best = Number.POSITIVE_INFINITY;
+    for (const point of this.grabPoints) {
+      if (point.x < this.minX - 60 || point.x > this.maxX + 60) continue;
+      const score = Math.abs(point.x - w.x) + Math.abs(point.y - w.y) * 2.4;
+      if (score < best) {
+        best = score;
+        nearest = point;
+      }
+    }
+    return nearest;
+  }
+
+  /** Giữ tham chiếu tới chính đạo cụ đang hiển thị để rung nó khi học sinh bám. */
+  private bindGrabProp(point: GrabPoint | null) {
+    this.releaseGrabProp();
+    if (!point) return;
+    const anchor = Array.from(this.svg.querySelectorAll<SVGGElement>("[data-grab-id]"))
+      .find((el) => el.getAttribute("data-grab-id") === point.id);
+    const visual = anchor?.querySelector<SVGGElement>("[data-grab-visual]") ?? null;
+    if (!visual) return;
+    this.pole = visual;
+    this.poleBaseTransform = visual.getAttribute("transform") ?? "";
+    visual.removeAttribute("opacity");
+  }
+
+  private releaseGrabProp() {
+    if (!this.pole) return;
+    if (this.poleBaseTransform) this.pole.setAttribute("transform", this.poleBaseTransform);
+    else this.pole.removeAttribute("transform");
+    this.pole.removeAttribute("opacity");
+    this.pole = null;
+    this.poleBaseTransform = "";
   }
 
   /** Cho các nhân vật vừa được hút quay lại đi dạo từ mép màn hình. */
@@ -1091,6 +1224,7 @@ export class SceneEngine {
     for (const w of this.walkers.values()) {
       if (w.mode !== "gone") continue;
       w.mode = "walk";
+      w.panicX = null;
       w.el.style.display = "";
       w.el.style.opacity = "";
       w.x = w.dir > 0 ? this.minX - 90 : this.maxX + 90;
@@ -1114,14 +1248,16 @@ export class SceneEngine {
       this.clone.remove();
       this.clone = null;
     }
+    this.releaseGrabProp();
     this.abductLayer.replaceChildren();
-    this.pole = null;
+    this.gripPoint = null;
     this.gripCenter = null;
     this.spotAmt = 0;
     for (const b of this.bubbles) b.walker = null;
     for (const w of this.walkers.values()) {
       w.mode = "walk";
       w.inBeam = false;
+      w.panicX = null;
       w.up = 0;
       w.el.style.display = "";
       w.el.style.opacity = "";

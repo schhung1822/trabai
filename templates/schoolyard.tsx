@@ -134,24 +134,28 @@ function SchoolBackground({ idp }: LayerProps) {
       <path d="M 340 880 L 420 620 L 1180 620 L 1260 880 Z" fill="#9BD3C1" opacity={0.28} />
 
       {/* cột bóng rổ */}
-      <g transform="translate(160 560)">
-        <rect x={-5} y={-170} width={10} height={170} fill="#4A4F63" {...OUT} strokeWidth={1.4} />
-        <rect x={-34} y={-196} width={68} height={46} rx={4} fill="#fff" {...OUT} />
-        <rect x={-14} y={-176} width={28} height={20} fill="none" stroke="#E8505B" strokeWidth={2.5} />
-        <ellipse cx={0} cy={-142} rx={16} ry={5} fill="none" stroke="#FF8A3D" strokeWidth={4} />
-        <path d="M -14 -140 L -9 -118 M 14 -140 L 9 -118 M 0 -138 L 0 -116" stroke="#fff" strokeWidth={1.8} />
+      <g data-grab-id="school-hoop-existing" transform="translate(160 560)">
+        <g data-grab-visual>
+          <rect x={-5} y={-170} width={10} height={170} fill="#4A4F63" {...OUT} strokeWidth={1.4} />
+          <rect x={-34} y={-196} width={68} height={46} rx={4} fill="#fff" {...OUT} />
+          <rect x={-14} y={-176} width={28} height={20} fill="none" stroke="#E8505B" strokeWidth={2.5} />
+          <ellipse cx={0} cy={-142} rx={16} ry={5} fill="none" stroke="#FF8A3D" strokeWidth={4} />
+          <path d="M -14 -140 L -9 -118 M 14 -140 L 9 -118 M 0 -138 L 0 -116" stroke="#fff" strokeWidth={1.8} />
+        </g>
       </g>
 
       {/* cây phượng */}
       <FlameTree x={330} y={560} s={1.25} />
       <FlameTree x={1330} y={560} s={1.15} />
-      <RoundTree x={720} y={556} s={0.8} leaf="#6CCB7A" leafDark="#55B866" />
+      <RoundTree x={720} y={556} s={0.8} leaf="#6CCB7A" leafDark="#55B866" grabId="school-tree-existing" />
 
       {/* cột cờ */}
-      <g transform="translate(1000 566)">
-        <rect x={-4} y={-300} width={8} height={300} fill="#C9CFD8" {...OUT} strokeWidth={1.4} />
-        <circle cx={0} cy={-304} r={7} fill="#FFC93C" {...OUT} strokeWidth={1.4} />
-        <VietnamFlag x={4} y={-290} w={96} />
+      <g data-grab-id="school-flag-existing" transform="translate(1000 566)">
+        <g data-grab-visual>
+          <rect x={-4} y={-300} width={8} height={300} fill="#C9CFD8" {...OUT} strokeWidth={1.4} />
+          <circle cx={0} cy={-304} r={7} fill="#FFC93C" {...OUT} strokeWidth={1.4} />
+          <VietnamFlag x={4} y={-290} w={96} />
+        </g>
       </g>
 
       {/* ghế đá + bảng tin */}
@@ -170,7 +174,7 @@ function SchoolBackground({ idp }: LayerProps) {
 function SchoolForeground() {
   return (
     <g>
-      <Lamp x={56} y={900} h={380} />
+      <Lamp x={56} y={900} h={380} grabId="school-lamp-existing" />
       <FlameTree x={1546} y={910} s={1.4} />
     </g>
   );
@@ -213,6 +217,17 @@ export const schoolTemplate: SceneTemplate = {
     { y: 724, scale: 0.85 },
     { y: 796, scale: 0.95 },
     { y: 874, scale: 1.05 },
+  ],
+  grabPoints: [
+    { id: "school-hoop-existing", kind: "hoop", x: 160, y: 560, scale: 1, render: false },
+    { id: "school-tree-existing", kind: "tree", x: 720, y: 556, scale: 0.8, render: false },
+    { id: "school-flag-existing", kind: "flag", x: 1000, y: 566, scale: 1, render: false },
+    { id: "school-lamp-existing", kind: "lamp", x: 56, y: 900, scale: 1, render: false },
+    { id: "school-sign-back", kind: "sign", x: 450, y: 662, scale: 0.7, color: "#2F6FB3" },
+    { id: "school-bollard-left", kind: "bollard", x: 280, y: 792, scale: 0.92, color: "#E26D4F" },
+    { id: "school-lamp-front", kind: "lamp", x: 630, y: 874, scale: 0.94 },
+    { id: "school-sign-front", kind: "sign", x: 980, y: 796, scale: 0.9, color: "#2EC4A0" },
+    { id: "school-bollard-right", kind: "bollard", x: 1400, y: 874, scale: 1, color: "#E26D4F" },
   ],
   fx: {
     night: { color: "#082B3A", opacity: 0.46 },
